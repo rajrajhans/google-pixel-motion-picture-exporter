@@ -1,0 +1,14 @@
+# directories
+node_modules
+
+# files
+.env
+.DS_Store
+*.sublime-*
+*.code-workspace
+
+.direnv/
+
+# Local environment variable files
+.env.local
+.env.*.local
