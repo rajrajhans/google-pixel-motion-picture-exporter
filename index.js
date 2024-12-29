@@ -2,10 +2,11 @@
 
 const fs = require('fs');
 const path = require('path');
+const glob = require('glob');
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  let inputPath = null;
+  let inputPaths = [];
   let outputDir = null;
 
   for (let i = 0; i < args.length; i++) {
@@ -17,12 +18,12 @@ function parseArgs() {
         console.log('Error: --output-directory requires a path argument');
         process.exit(1);
       }
-    } else if (!inputPath) {
-      inputPath = args[i];
+    } else {
+      inputPaths.push(args[i]);
     }
   }
 
-  return { inputPath, outputDir };
+  return { inputPaths, outputDir };
 }
 
 function extractMotionPhoto(filePath, outputDir = null) {
@@ -95,32 +96,68 @@ function findLastSequence(buffer, sequence) {
   return -1;
 }
 
-function main() {
-  const { inputPath, outputDir } = parseArgs();
+function processFiles(pattern, outputDir) {
+  const files = glob.sync(pattern);
 
-  if (!inputPath) {
+  if (files.length === 0) {
+    console.log('No matching files found.');
+    return;
+  }
+
+  console.log(`Found ${files.length} files to process.`);
+  files.forEach((file, index) => {
+    console.log(`\nProcessing file ${index + 1} of ${files.length}`);
+    if (fs.statSync(file).isFile() && /\.(jpg|jpeg)$/i.test(file)) {
+      extractMotionPhoto(file, outputDir);
+    } else {
+      console.log(`Skipping ${file} - not a valid JPEG file`);
+    }
+  });
+}
+
+function main() {
+  const { inputPaths, outputDir } = parseArgs();
+
+  if (inputPaths.length === 0) {
     console.log(
-      'Usage: pixel-motion-picture-exporter <path_to_motion_photo> [--output-directory <path>]'
+      'Usage: pixel-motion-picture-exporter <path_to_motion_photo(s)> [--output-directory <path>]'
     );
     console.log('Options:');
     console.log(
       '  --output-directory, -o  Specify output directory for extracted files'
     );
+    console.log(
+      '\nYou can use glob patterns like *.jpg to process multiple files'
+    );
     process.exit(1);
   }
 
-  console.log('Processing motion photo...');
-  if (
-    fs.existsSync(inputPath) &&
-    fs.statSync(inputPath).isFile() &&
-    /\.(jpg|jpeg)$/i.test(inputPath)
-  ) {
-    extractMotionPhoto(inputPath, outputDir);
-  } else {
-    console.log(`Error: ${inputPath} is not a valid JPEG file`);
-  }
+  console.log('Processing motion photo(s)...');
 
-  console.log('Done.');
+  // Process each input path
+  inputPaths.forEach((inputPath) => {
+    // Check if the path contains glob patterns
+    if (
+      inputPath.includes('*') ||
+      inputPath.includes('?') ||
+      inputPath.includes('[')
+    ) {
+      processFiles(inputPath, outputDir);
+    } else {
+      // Single file case
+      if (
+        fs.existsSync(inputPath) &&
+        fs.statSync(inputPath).isFile() &&
+        /\.(jpg|jpeg)$/i.test(inputPath)
+      ) {
+        extractMotionPhoto(inputPath, outputDir);
+      } else {
+        console.log(`Skipping ${inputPath} - not a valid JPEG file`);
+      }
+    }
+  });
+
+  console.log('\nDone.');
 }
 
 main();
