@@ -3,7 +3,29 @@
 const fs = require('fs');
 const path = require('path');
 
-function extractMotionPhoto(filePath) {
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let inputPath = null;
+  let outputDir = null;
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--output-directory' || args[i] === '-o') {
+      if (i + 1 < args.length) {
+        outputDir = args[i + 1];
+        i++; // Skip the next argument since we've used it
+      } else {
+        console.log('Error: --output-directory requires a path argument');
+        process.exit(1);
+      }
+    } else if (!inputPath) {
+      inputPath = args[i];
+    }
+  }
+
+  return { inputPath, outputDir };
+}
+
+function extractMotionPhoto(filePath, outputDir = null) {
   console.log(`\tProcessing: ${filePath}`);
 
   const fileSize = fs.statSync(filePath).size;
@@ -26,10 +48,15 @@ function extractMotionPhoto(filePath) {
       // accounting for the length of FFD9
       const actualJpgEnd = jpgEndPos + 2;
 
-      const outputBase = path.join(
-        path.dirname(filePath),
-        path.parse(filePath).name
-      );
+      // If outputDir is specified, use it; otherwise use the input file's directory
+      const baseDir = outputDir || path.dirname(filePath);
+
+      // Create output directory if it doesn't exist
+      if (!fs.existsSync(baseDir)) {
+        fs.mkdirSync(baseDir, { recursive: true });
+      }
+
+      const outputBase = path.join(baseDir, path.parse(filePath).name);
 
       console.log('\t\tSaving photo...');
       const photoPath = `${outputBase}_photo.jpg`;
@@ -69,22 +96,28 @@ function findLastSequence(buffer, sequence) {
 }
 
 function main() {
-  if (process.argv.length !== 3) {
-    console.log('Usage: extract-motion <path_to_motion_photo>');
+  const { inputPath, outputDir } = parseArgs();
+
+  if (!inputPath) {
+    console.log(
+      'Usage: pixel-motion-picture-exporter <path_to_motion_photo> [--output-directory <path>]'
+    );
+    console.log('Options:');
+    console.log(
+      '  --output-directory, -o  Specify output directory for extracted files'
+    );
     process.exit(1);
   }
 
-  const srcPath = process.argv[2];
-
   console.log('Processing motion photo...');
   if (
-    fs.existsSync(srcPath) &&
-    fs.statSync(srcPath).isFile() &&
-    /\.(jpg|jpeg)$/i.test(srcPath)
+    fs.existsSync(inputPath) &&
+    fs.statSync(inputPath).isFile() &&
+    /\.(jpg|jpeg)$/i.test(inputPath)
   ) {
-    extractMotionPhoto(srcPath);
+    extractMotionPhoto(inputPath, outputDir);
   } else {
-    console.log(`Error: ${srcPath} is not a valid JPEG file`);
+    console.log(`Error: ${inputPath} is not a valid JPEG file`);
   }
 
   console.log('Done.');
