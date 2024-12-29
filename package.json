@@ -1,0 +1,23 @@
+{
+  "name": "google-pixel-motion-picture-exporter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rajrajhans/google-pixel-motion-picture-exporter.git"
+  },
+  "keywords": [
+    "pixel-motion-picture",
+    "google-pixel"
+  ],
+  "author": "rajrajhans",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rajrajhans/google-pixel-motion-picture-exporter/issues"
+  },
+  "homepage": "https://github.com/rajrajhans/google-pixel-motion-picture-exporter#readme"
+}
