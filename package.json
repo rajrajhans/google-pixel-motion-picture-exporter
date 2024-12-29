@@ -1,6 +1,6 @@
 {
   "name": "google-pixel-motion-picture-exporter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI tool to extract photo and video from Google Pixel Motion Photos",
   "main": "index.js",
   "bin": {
