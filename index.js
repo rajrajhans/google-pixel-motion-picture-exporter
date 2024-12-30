@@ -8,6 +8,7 @@ function parseArgs() {
   const args = process.argv.slice(2);
   let inputPaths = [];
   let outputDir = null;
+  let deleteOriginal = false;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--output-directory' || args[i] === '-o') {
@@ -18,15 +19,21 @@ function parseArgs() {
         console.log('Error: --output-directory requires a path argument');
         process.exit(1);
       }
+    } else if (args[i] === '--delete-original') {
+      deleteOriginal = true;
     } else {
       inputPaths.push(args[i]);
     }
   }
 
-  return { inputPaths, outputDir };
+  return { inputPaths, outputDir, deleteOriginal };
 }
 
-function extractMotionPhoto(filePath, outputDir = null) {
+function extractMotionPhoto(
+  filePath,
+  outputDir = null,
+  deleteOriginal = false
+) {
   console.log(`\tProcessing: ${filePath}`);
 
   const fileSize = fs.statSync(filePath).size;
@@ -70,6 +77,11 @@ function extractMotionPhoto(filePath, outputDir = null) {
       console.log(
         `\t\tExtracted files saved as: ${photoPath} and ${videoPath}`
       );
+
+      if (deleteOriginal) {
+        console.log('\t\tDeleting original file...');
+        fs.unlinkSync(filePath);
+      }
     } else {
       console.log(
         '\t\tSKIPPING - File appears to contain an MP4 but no valid JPG EOI segment could be found.'
@@ -96,7 +108,7 @@ function findLastSequence(buffer, sequence) {
   return -1;
 }
 
-function processFiles(pattern, outputDir) {
+function processFiles(pattern, outputDir, deleteOriginal) {
   const files = glob.sync(pattern);
 
   if (files.length === 0) {
@@ -108,7 +120,7 @@ function processFiles(pattern, outputDir) {
   files.forEach((file, index) => {
     console.log(`\nProcessing file ${index + 1} of ${files.length}`);
     if (fs.statSync(file).isFile() && /\.(jpg|jpeg)$/i.test(file)) {
-      extractMotionPhoto(file, outputDir);
+      extractMotionPhoto(file, outputDir, deleteOriginal);
     } else {
       console.log(`Skipping ${file} - not a valid JPEG file`);
     }
@@ -116,15 +128,18 @@ function processFiles(pattern, outputDir) {
 }
 
 function main() {
-  const { inputPaths, outputDir } = parseArgs();
+  const { inputPaths, outputDir, deleteOriginal } = parseArgs();
 
   if (inputPaths.length === 0) {
     console.log(
-      'Usage: pixel-motion-picture-exporter <path_to_motion_photo(s)> [--output-directory <path>]'
+      'Usage: pixel-motion-picture-exporter <path_to_motion_photo(s)> [--output-directory <path>] [--delete-original]'
     );
     console.log('Options:');
     console.log(
       '  --output-directory, -o  Specify output directory for extracted files'
+    );
+    console.log(
+      '  --delete-original       Delete original file after successful extraction'
     );
     console.log(
       '\nYou can use glob patterns like *.jpg to process multiple files'
@@ -142,7 +157,7 @@ function main() {
       inputPath.includes('?') ||
       inputPath.includes('[')
     ) {
-      processFiles(inputPath, outputDir);
+      processFiles(inputPath, outputDir, deleteOriginal);
     } else {
       // Single file case
       if (
@@ -150,7 +165,7 @@ function main() {
         fs.statSync(inputPath).isFile() &&
         /\.(jpg|jpeg)$/i.test(inputPath)
       ) {
-        extractMotionPhoto(inputPath, outputDir);
+        extractMotionPhoto(inputPath, outputDir, deleteOriginal);
       } else {
         console.log(`Skipping ${inputPath} - not a valid JPEG file`);
       }

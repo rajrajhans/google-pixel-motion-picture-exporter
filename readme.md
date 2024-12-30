@@ -22,12 +22,13 @@ pixel-motion-picture-exporter <path-to-motion-photo>
 ## Usage
 
 ```bash
-pixel-motion-picture-exporter <path-to-motion-photo> [--output-directory <path>]
+pixel-motion-picture-exporter <path-to-motion-photo> [--output-directory <path>] [--delete-original]
 ```
 
 ### Options
 
 - `--output-directory`, `-o`: Specify a custom output directory for the extracted files
+- `--delete-original`: Delete the original motion photo file after successful extraction (default: false)
 
 ### Examples
 
@@ -49,6 +50,12 @@ pixel-motion-picture-exporter ./*.MP.jpg
 pixel-motion-picture-exporter ./MOTION_PHOTO.MP.jpg --output-directory ./extracted
 # or
 pixel-motion-picture-exporter ./MOTION_PHOTO.MP.jpg -o ./extracted
+```
+
+4. Extract files and delete the original:
+
+```bash
+pixel-motion-picture-exporter ./MOTION_PHOTO.MP.jpg --delete-original
 ```
 
 ### Output
